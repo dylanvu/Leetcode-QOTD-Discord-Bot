@@ -41,14 +41,17 @@ if (!client) {
     throw new Error("Client is undefined!");
 }
 
-const hardcodedChannelID = "1072446134066348063";
+const dailyChannelId = process.env.DAILY_CHANNEL;
+if (!dailyChannelId) {
+    throw new Error("Channel ID to send daily leetcode to is missing");
+}
 
 client.on("ready", () => {
     if (!client.user) {
         throw new Error("Client.user is undefined!");
     }
     console.log(`Logged in as ${client.user.tag}!`);
-    queueDailyQuestion(client, hardcodedChannelID);
+    queueDailyQuestion(client, dailyChannelId);
 });
 
 
