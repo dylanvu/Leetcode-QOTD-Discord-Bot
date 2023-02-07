@@ -3,7 +3,8 @@ import Discord from "discord.js";
 
 // import dotenv to load the token from the .env file
 import dotenv from "dotenv";
-import { sendDailyQuestion } from "./cron";
+import { queueDailyQuestion } from "./cron";
+import { getAndSendNewProblem } from "./problem";
 
 // run the dotenv package to actually load from the .env file
 dotenv.config();
@@ -27,12 +28,14 @@ if (!client) {
     throw new Error("Client is undefined!");
 }
 
+const hardcodedChannelID = "1072446134066348063";
 
 client.on("ready", () => {
     if (!client.user) {
         throw new Error("Client.user is undefined!");
     }
     console.log(`Logged in as ${client.user.tag}!`);
+    queueDailyQuestion(client, hardcodedChannelID);
 });
 
 
@@ -41,7 +44,8 @@ client.on("ready", () => {
 client.on("messageCreate", msg => {
     // console.log(msg.channelId);
     if (msg.content === "!lc new") {
-        sendDailyQuestion(client, msg.channelId);
+        console.log(msg.channelId);
+        getAndSendNewProblem(client, msg.channelId);
     }
 });
 
