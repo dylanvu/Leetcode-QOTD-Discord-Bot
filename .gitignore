@@ -102,3 +102,7 @@ dist
 
 # TernJS port file
 .tern-port
+
+# ignore compiled js files
+# normally lib is ignored but because I'm deploying on replit with uptime robot, it makes it easier if it's not ignored
+lib
