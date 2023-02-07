@@ -3,11 +3,24 @@ import Discord from "discord.js";
 
 // import dotenv to load the token from the .env file
 import dotenv from "dotenv";
+
+// import express to keep the bot alive via unholy means
+import express from "express";
+
+
+// import useful functions
 import { queueDailyQuestion } from "./cron";
 import { getAndSendNewProblem } from "./problem";
 
 // run the dotenv package to actually load from the .env file
 dotenv.config();
+
+// create a webserver to keep the bot alive
+const APP = express();
+const PORT: number = 3000;
+
+APP.get('/', (req: any, res: any) => res.send("Giving CPR to Ileen's Dead Server!"));
+APP.listen(PORT, () => console.log(`Leetcode Bot doing leetcode at http://localhost:${PORT}`));
 
 // create the discord client object
 const client = new Discord.Client({
