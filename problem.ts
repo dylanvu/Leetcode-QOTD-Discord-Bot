@@ -91,7 +91,9 @@ export async function getAndSendNewProblem(client: Discord.Client, channelId: st
                 name: "Link", value: today.url
             })
             .setThumbnail(thumbnailIcon)
-            .setFooter({ text: `https://github.com/vu-dylan/Leetcode-QOTD-Discord-Bot`, iconURL: githubLogo });
+            .setFooter({
+                text: `Wondering how I work? https://github.com/vu-dylan/Leetcode-QOTD-Discord-Bot\nBot created by Dylan Vu 😎`, iconURL: githubLogo
+            });
         // send message
         const channel = client.channels.cache.get(channelId) as Discord.TextChannel;
         if (channel) {
