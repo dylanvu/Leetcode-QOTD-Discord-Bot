@@ -7,6 +7,9 @@ import dotenv from "dotenv";
 // import express to keep the bot alive via unholy means
 import express from "express";
 
+// enable the process to exit automatically if we get rate limited
+import { exec } from "child_process"
+
 
 // import useful functions
 import { queueDailyQuestion } from "./cron";
@@ -62,6 +65,14 @@ client.on("messageCreate", msg => {
     if (msg.content === "!lc new") {
         console.log(msg.channelId);
         getAndSendNewProblem(client, msg.channelId);
+    }
+});
+
+// 429 is a rate limit
+client.on('debug', debug => {
+    console.log(debug)
+    if (debug.includes("429")) { // 429 is a rate limit, kill replit if it is rate limited
+        exec("kill 1");
     }
 });
 
