@@ -10,6 +10,9 @@ import express from "express";
 // enable the process to exit automatically if we get rate limited
 import { exec } from "child_process"
 
+// import mongodb for database stuff
+import * as mongo from 'mongodb';
+
 
 // import useful functions
 import { queueDailyQuestion } from "./cron";
@@ -46,10 +49,25 @@ if (!client) {
     throw new Error("Client is undefined!");
 }
 
+// initialize MongoDB client
+const mongoclient = new mongo.MongoClient(process.env.MONGO_DB_CONNECTION!); // Use the ! for non null assertion operator: https://stackoverflow.com/questions/54496398/typescript-type-string-undefined-is-not-assignable-to-type-string
+
 const dailyChannelId = process.env.DAILY_CHANNEL;
 if (!dailyChannelId) {
     throw new Error("Channel ID to send daily leetcode to is missing");
 }
+
+// Connect to MongoDB, you only have to do this once at the beginning
+const MongoConnect = async () => {
+    try {
+        await mongoclient.connect()
+        // Start cron jobs, we should really do this after connecting to the database
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+MongoConnect();
 
 client.on("ready", () => {
     if (!client.user) {
@@ -58,6 +76,8 @@ client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
     queueDailyQuestion(client, dailyChannelId);
 });
+
+
 
 const baseCommand = "!lc";
 const leaderboardCommand = "leaderboard";
@@ -81,8 +101,7 @@ client.on("messageCreate", msg => {
                 const discordID = msg.author.id;
                 // fetch leetcode profile
                 const profile = getLeetcodeProfile(leetcodeUsername);
-            // parse solved questions
-            // save to database
+                // save to database
             }
         }
         // ignore since it's invalid size
