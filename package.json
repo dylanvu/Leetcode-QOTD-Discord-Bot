@@ -1,12 +1,13 @@
 {
   "name": "leetcode-qotd-discord-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
-    "start": "node ./lib/index.js"
+    "start": "node ./lib/src/index.js",
+    "deployCommands": "node ./lib/src/deployCommands.js"
   },
   "repository": {
     "type": "git",

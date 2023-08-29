@@ -1,6 +1,6 @@
 // import axios for API calls to the leetcode website
 import Axios from "axios";
-import { Problem, FilterOptions } from "./interfaces";
+import { Problem, FilterOptions } from "../interfaces/interfaces";
 import { getRandomInt } from "./util";
 import Discord from "discord.js";
 
@@ -46,7 +46,12 @@ export async function getAllProblems(): Promise<Problem[]> {
     });
 }
 
-export async function getAndSendNewProblem(client: Discord.Client, channelId: string, filterOptions?: FilterOptions) {
+/**
+ * Generate a new leetcode problem by calling the api
+ * @param filterOptions optional filtering options
+ * @returns an embed object with the new problem
+ */
+export async function generateNewProblem(filterOptions?: FilterOptions) {
     console.log("Sending a new problem");
     // make the api call
     const problems = await getAllProblems();
@@ -92,14 +97,9 @@ export async function getAndSendNewProblem(client: Discord.Client, channelId: st
             })
             .setThumbnail(thumbnailIcon)
             .setFooter({
-                text: `Wondering how I work? https://github.com/vu-dylan/Leetcode-QOTD-Discord-Bot\nBot created by Dylan Vu 😎`, iconURL: githubLogo
+                text: `https://github.com/vu-dylan/Leetcode-QOTD-Discord-Bot\nBlame Dylan for any bugs`, iconURL: githubLogo
             });
         // send message
-        const channel = client.channels.cache.get(channelId) as Discord.TextChannel;
-        if (channel) {
-            channel.send({ embeds: [embed] });
-        } else {
-            console.error(`Could not find channel associated with id ${channelId}`);
-        }
+        return embed;
     }
 }

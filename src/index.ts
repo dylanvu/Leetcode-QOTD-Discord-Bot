@@ -13,7 +13,8 @@ import { exec } from "child_process"
 
 // import useful functions
 import { queueDailyQuestion } from "./cron";
-import { getAndSendNewProblem } from "./problem";
+import { generateNewProblem } from "./problem";
+import { sendEmbedToChannel } from "./helper";
 
 // run the dotenv package to actually load from the .env file
 dotenv.config();
@@ -64,7 +65,26 @@ client.on("messageCreate", msg => {
     // console.log(msg.channelId);
     if (msg.content === "!lc new") {
         console.log(msg.channelId);
-        getAndSendNewProblem(client, msg.channelId);
+        generateNewProblem().then((embed) => {
+            embed ? sendEmbedToChannel(client, msg.channelId, embed) : msg.reply("Sorry, there was an error getting a new embed. Please contact Dylan.")
+        });
+    }
+});
+
+client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    console.log(client.commands);
+    const command = client.commands.get(interaction.commandName);
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
+
+    try {
+        command.run();
+    }
+    catch (e) {
+        console.error(e);
     }
 });
 
