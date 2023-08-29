@@ -14,6 +14,7 @@ import { exec } from "child_process"
 // import useful functions
 import { queueDailyQuestion } from "./cron";
 import { generateNewProblem } from "./problem";
+import { getLeetcodeProfile } from "./leaderboard";
 import { sendEmbedToChannel } from "./helper";
 
 // run the dotenv package to actually load from the .env file
@@ -58,16 +59,33 @@ client.on("ready", () => {
     queueDailyQuestion(client, dailyChannelId);
 });
 
-
+const baseCommand = "!lc";
+const leaderboardCommand = "leaderboard";
 
 // when a "messageCreate" event happens (message is sent in a server where the bot lives in), handle it
 client.on("messageCreate", msg => {
     // console.log(msg.channelId);
-    if (msg.content === "!lc new") {
+    if (msg.content === `${baseCommand} new`) {
         console.log(msg.channelId);
         generateNewProblem().then((embed) => {
             embed ? sendEmbedToChannel(client, msg.channelId, embed) : msg.reply("Sorry, there was an error getting a new embed. Please contact Dylan.")
         });
+    } else if (msg.content === `${baseCommand} ${leaderboardCommand} join`) {
+        // parse command for leetcode user id
+        const splittedContent = msg.content.split(" ");
+        if (splittedContent.length === 4) {
+            // assumption: next argument is the leetcode id
+            const leetcodeUsername = splittedContent.at(-1);
+            if (leetcodeUsername) {
+                // get message author id
+                const discordID = msg.author.id;
+                // fetch leetcode profile
+                const profile = getLeetcodeProfile(leetcodeUsername);
+            // parse solved questions
+            // save to database
+            }
+        }
+        // ignore since it's invalid size
     }
 });
 

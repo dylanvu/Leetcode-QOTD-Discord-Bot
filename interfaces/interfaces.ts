@@ -12,6 +12,16 @@ export interface Problem {
 }
 
 /**
+ * Leetcode profile object
+ */
+export interface Profile {
+    username: string,
+    easy: number,
+    medium: number,
+    hard: number
+}
+
+/**
  * Define filtering options for questions
  * @param {difficultyOptions} difficulty question difficulty.  "Hard" | "Medium" | "Easy"
  * @param {boolean} paid whether the question should be paid or not.
