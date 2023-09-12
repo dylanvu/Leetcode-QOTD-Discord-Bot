@@ -1,6 +1,20 @@
 import { Collection } from "discord.js"
 
-export type difficultyOptions = "Hard" | "Medium" | "Easy"
+// difficulty of leetcode problems
+export type DifficultyOptions = "Hard" | "Medium" | "Easy"
+
+// types of leaderboards
+export enum LeaderboardType {
+    Weekly = "weekly",
+    Monthly = "monthly"
+}
+
+// how much each leetcode question value should be
+export enum PointsByDifficulty {
+    Easy = 1,
+    Medium = 2,
+    Hard = 4
+}
 
 /**
  * Declare commands because it should exist on the Discord.js client, but does not for some reason

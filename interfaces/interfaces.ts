@@ -1,4 +1,4 @@
-import { difficultyOptions } from "../types/types"
+import { DifficultyOptions } from "../types/types"
 /**
  * Define the problem object for a leetcode problem
  */
@@ -6,7 +6,7 @@ export interface Problem {
     id: string,
     title: string,
     titleSlug: string,
-    difficulty: difficultyOptions,
+    difficulty: DifficultyOptions,
     paid: boolean,
     url: string
 }
@@ -15,18 +15,39 @@ export interface Problem {
  * Leetcode profile object
  */
 export interface Profile {
-    username: string,
-    easy: number,
-    medium: number,
-    hard: number
+    easy: number,   // number of easy questions solved
+    medium: number, // number of medium questions solved
+    hard: number // number of hard questions solved
+}
+
+/**
+ * Represent the necessary information for ranking a player
+ */
+interface scoreInformation {
+    points: number,
+    initialProfile: Profile // the representation of the leetcode profile of the user at the beginning of the specified timeframe. Will be updated and overwritten at the end of each leaderboard period
+}
+
+export interface Player {
+    discordId: string, // discord id of the user
+    username: string, // leetcode username
+    weekly: scoreInformation, // information about weekly score
+    monthly: scoreInformation, // information about monthly score
+    // add more fields as needed, like quarterly, yearly, lifetime, etc
+}
+
+export interface LeaderboardChannel {
+    guildId: string, // the discord server/guild ID
+    channelId: string, // the discord channel ID to send the leaderboard updates to
+    players: Player[] // an array of users participating in the leaderboard
 }
 
 /**
  * Define filtering options for questions
- * @param {difficultyOptions} difficulty question difficulty.  "Hard" | "Medium" | "Easy"
+ * @param {DifficultyOptions} difficulty question difficulty.  "Hard" | "Medium" | "Easy"
  * @param {boolean} paid whether the question should be paid or not.
  */
 export interface FilterOptions {
-    difficulty: difficultyOptions,
+    difficulty: DifficultyOptions,
     paid: boolean
 }

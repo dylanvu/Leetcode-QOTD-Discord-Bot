@@ -135,3 +135,5 @@ client.on('debug', debug => {
 
 // log into discord to take the bot online
 client.login(BOT_TOKEN);
+
+export { mongoclient }

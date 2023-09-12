@@ -21,4 +21,3 @@ export const queueDailyQuestion = async (client: Discord.Client, channelId: stri
     console.log(`Starting cron job to send questions to channel id ${channelId}`);
     dailyQuestionJob.start();
 }
-
