@@ -104,7 +104,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     // check if leetcode username is valid
     const profile = await getLeetcodeProfile(leetcodeUsername);
     if (!profile) {
-        // send message rejecting join request due to error, likely missing?
+        // send message rejecting join request due to error, likely missing/incorrect leetcode username?
         console.error(`Could not find leetcode profile for ${leetcodeUsername}, did not add player.`);
         return;
     }
@@ -112,46 +112,55 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     // add player to mongoDB collection
     // query database to see if the guildId already exists
 
-    const guildCursor = await getGuildCursor(guildId);
+    let guildCursor = await getGuildCursor(guildId);
+    const collection = getCollection();
 
-    // if it exists, add player to the collection
-    if (guildCursor) {
-        // create new player object
-        const newPlayer: Player = {
-            discordId: discordId,
-            username: leetcodeUsername,
-            weekly: {
-                points: 0,
-                initialProfile: profile
-            },
-            monthly: {
-                points: 0,
-                initialProfile: profile
-            }
-        }
-
-        // now need to update mongoDB
-
-        let collection = getCollection();
-        // copy old players
-        const prevPlayers: Player[] = guildCursor.players;
-        // add the new player
-        prevPlayers.push(newPlayer);
-
-        // update mongoDB
-        await collection.updateOne({
-            guildId: guildId
-        }, {
-            $set: {
-                players: prevPlayers
-            }
-        });
-        console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
-    } else {
-        // else, create a new guild object
+    // if guild does not exist, create it
+    if (!guildCursor) {
         console.log(`Could not find guild for id: ${guildId} when adding player ${leetcodeUsername}, creating new guild`);
         // TODO: do me
+
+        // now get the guild cursor again
+        guildCursor = await getGuildCursor(guildId);
+        if (!guildCursor) {
+            // error when creating new guild
+            console.error(`Could not create the new guild in mongoDB for guildId ${guildId} while adding player ${leetcodeUsername}`);
+            // send message rejecting join request due to error, likely in the backend/bot side
+            return;
+        }
     }
+
+    
+    // add player to the collection
+    // create new player object
+    const newPlayer: Player = {
+        discordId: discordId,
+        username: leetcodeUsername,
+        weekly: {
+            points: 0,
+            initialProfile: profile
+        },
+        monthly: {
+            points: 0,
+            initialProfile: profile
+        }
+    }
+
+    // now need to update mongoDB
+    // copy old players
+    const prevPlayers: Player[] = guildCursor.players;
+    // add the new player
+    prevPlayers.push(newPlayer);
+
+    // update mongoDB
+    await collection.updateOne({
+        guildId: guildId
+    }, {
+        $set: {
+            players: prevPlayers
+        }
+    });
+    console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
 
 }
 
