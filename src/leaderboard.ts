@@ -1,8 +1,9 @@
 import Axios from "axios";
-import { Profile, LeaderboardChannel } from "../interfaces/interfaces";
-import { LeaderboardType, PointsByDifficulty } from "../types/types";
+import { Profile, LeaderboardChannel, Player } from "../interfaces/interfaces";
+import { LeaderboardType, PointsByDifficulty, collectionName } from "../types/types";
 import * as cheerio from "cheerio";
 import { mongoclient } from "./index";
+import { WithId, Document } from "mongodb";
 
 /**
  * scrape the leetcoder profile information to obtain number of solved problems of each difficulty
@@ -64,15 +65,32 @@ export async function getLeetcodeProfile(leetcodeUsername: string): Promise<Prof
     return profileObject;
 }
 
-async function getGuild(guildId: string): Promise<LeaderboardChannel | null> {
-    // query databse for guild
+function getCollection() {
+    return mongoclient.db("Leetcode-QOTD-Discord").collection(collectionName);
 }
 
-async function getLeetcodeUsernameFromDiscordId(discordId: string, guildId: string): Promise<string> {
+async function getGuildCursor(guildId: string): Promise<WithId<Document> | null> {
+    // query databse for guild
+    let collection = getCollection();
+    let guildCursor = await collection.findOne({ guildId: guildId });
+
+    return guildCursor;
+
+}
+
+async function getLeetcodeUsernameFromDiscordId(discordId: string, guildId: string): Promise<string | null> {
     // query database for guild
-    const guild = await getGuild(guildId);
+    const guild = await getGuildCursor(guildId);
+    if (!guild) {
+        // error
+        return null;
+    }
     // get the player object for the discordId
     // return the leetcode username
+    const players: Player[] = guild.players;
+    const foundPlayer = players.find((player) => player.discordId === discordId);
+
+    return foundPlayer ? foundPlayer.username : null;
 }
 
 /**
@@ -81,7 +99,7 @@ async function getLeetcodeUsernameFromDiscordId(discordId: string, guildId: stri
  * @param leetcodeUsername 
  * @returns 
  */
-export async function addPlayer(discordId: string, leetcodeUsername: string) {
+export async function addPlayer(discordId: string, leetcodeUsername: string, guildId: string) {
 
     // check if leetcode username is valid
     const profile = await getLeetcodeProfile(leetcodeUsername);
@@ -91,11 +109,48 @@ export async function addPlayer(discordId: string, leetcodeUsername: string) {
     }
 
     // add player to mongoDB collection
-    
     // query database to see if the guildId already exists
 
+    const guildCursor = await getGuildCursor(guildId);
+
     // if it exists, add player to the collection
-    // else, create a new object
+    if (guildCursor) {
+        // create new player object
+        const newPlayer: Player = {
+            discordId: discordId,
+            username: leetcodeUsername,
+            weekly: {
+                points: 0,
+                initialProfile: profile
+            },
+            monthly: {
+                points: 0,
+                initialProfile: profile
+            }
+        }
+
+        // now need to update mongoDB
+
+        let collection = getCollection();
+        // copy old players
+        const prevPlayers: Player[] = guildCursor.players;
+        // add the new player
+        prevPlayers.push(newPlayer);
+
+        // update mongoDB
+        await collection.updateOne({
+            guildId: guildId
+        }, {
+            $set: {
+                prev_question: prevPlayers
+            }
+        });
+        console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
+    } else {
+        // else, create a new guild object
+        console.log(`Could not find guild for id: ${guildId} when adding player ${leetcodeUsername}, creating new guild`);
+        // TODO: do me
+    }
 
 }
 
@@ -106,7 +161,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string) {
  */
 export async function removePlayer(discordId: string, guildId: string) {
     // query database for guild
-    const guild = await getGuild(guildId);
+    const guild = await getGuildCursor(guildId);
     // if it does not exist, return
 
     // remove player from collection
@@ -148,10 +203,15 @@ export async function updateScore(discordId: string, guildId: string, leaderboar
  * @param leetcodeUsername 
  * @param profileParam 
  */
-export async function calculateScore(discordId: string, guildId: string, leaderboardType: keyof LeaderboardType, leetcodeUsername?: string, profileParam?: Profile): Promise<number> {
+export async function calculateScore(discordId: string, guildId: string, leaderboardType: keyof LeaderboardType, leetcodeUsername?: string, profileParam?: Profile): Promise<number | undefined> {
 
     // get the leetcode username, if it was not passed in as a parameter
     const username = leetcodeUsername ? leetcodeUsername : await getLeetcodeUsernameFromDiscordId(discordId, guildId);
+
+    if (!username) {
+        // do nothing
+        return undefined;
+    }
 
     // get the current profile, if it wasn't passed in
     const profile = profileParam ? profileParam : getLeetcodeProfile(username);
