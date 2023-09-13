@@ -69,6 +69,16 @@ function getCollection() {
     return mongoclient.db("Leetcode-QOTD-Discord").collection(collectionName);
 }
 
+async function createGuild(guildId: string) {
+    let collection = getCollection();
+    const newGuild: LeaderboardChannel = {
+        guildId: guildId,
+        channelId: "",
+        players: []
+    }
+    await collection.insertOne(newGuild)
+}
+
 async function getGuildCursor(guildId: string): Promise<WithId<Document> | null> {
     // query databse for guild
     let collection = getCollection();
@@ -119,6 +129,8 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     if (!guildCursor) {
         console.log(`Could not find guild for id: ${guildId} when adding player ${leetcodeUsername}, creating new guild`);
         // TODO: do me
+
+        createGuild(guildId);
 
         // now get the guild cursor again
         guildCursor = await getGuildCursor(guildId);
