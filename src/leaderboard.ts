@@ -143,7 +143,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
             guildId: guildId
         }, {
             $set: {
-                prev_question: prevPlayers
+                players: prevPlayers
             }
         });
         console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
