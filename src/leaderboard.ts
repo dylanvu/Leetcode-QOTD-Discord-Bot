@@ -105,6 +105,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     const profile = await getLeetcodeProfile(leetcodeUsername);
     if (!profile) {
         // send message rejecting join request due to error, likely missing?
+        console.error(`Could not find leetcode profile for ${leetcodeUsername}, did not add player.`);
         return;
     }
 
