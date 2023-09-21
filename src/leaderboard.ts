@@ -1,6 +1,6 @@
 import Axios from "axios";
 import { Profile, LeaderboardChannel, Player } from "../interfaces/interfaces";
-import { LeaderboardTypes, PointsByDifficulty, collectionName } from "../types/types";
+import { LeaderboardTypes, AllLeaderboardTypes, PointsByDifficulty, collectionName } from "../types/types";
 import * as cheerio from "cheerio";
 import { mongoclient } from "./index";
 import { WithId, Document } from "mongodb";
@@ -264,17 +264,6 @@ export async function updateProfile(leetcodeUsername: string, discordId: string,
 }
 
 /**
- * update the player score in the leaderboard database
- * should be done BEFORE any initial profile updates
- * @param discordId 
- * @param guildId 
- * @param leaderboardType 
- */
-export async function updateScore(discordId: string, guildId: string, leaderboardType: LeaderboardTypes, newScore: number) {
-    // update the player score in the database
-}
-
-/**
  * calculate the new score. does not update in database
  * @param discordId 
  * @param guildId 
@@ -333,20 +322,50 @@ export async function calculateScoreDifference(discordId: string, guildId: strin
 
     // return the player's score
     return newProfileScore - oldProfileScore;
-
 }
 
 function calculateScore(profile: Profile): number {
     return profile.easy * PointsByDifficulty.Easy + profile.medium * PointsByDifficulty.Medium + profile.hard * PointsByDifficulty.Hard;
 }
 
-// function that the cron job runs to update the leaderboard every day
-export async function updateScoreJob(guildId: string, leaderboardType: LeaderboardTypes) {
+/**
+ * function that the cron job runs to update the leaderboard every day. does not update the profile
+ * @param guildId string representing the discord guild ID
+ * @returns 
+ */
+export async function updateScoreJob(guildId: string) {
+    const collection = getCollection();
     // grab all the players for the guild
+    const guild = await getGuildCursor(guildId);
+    if (!guild) {
+        console.error(`Could not get guild cursor for guild ${guildId} when running score job update`)
+        return;
+    }
     // for each player
+    await guild.players.forEach(async (player: Player) => {
         // for each specific leaderboard type:
-        // calculate new scores based on the initial profile, and the current profile
-        // update the score in the database
+        for (const type of AllLeaderboardTypes) {
+            // calculate new scores based on the initial profile, and the current profile
+            const newScore = await calculateScoreDifference(player.discordId, guildId, type, player.username, player[type].initialProfile);
+            if (newScore === undefined) {
+                console.error(`Could not get score difference for player ${player.discordId} (${player.username}) for "${type}" leaderboard`)
+                continue;
+            }
+            // update the score for the player
+            player[type].points = newScore;
+        }
+    });
+
+    // update score in the database
+    await collection.updateOne({
+        guildId: guildId
+    }, {
+        $set: {
+            players: guild.players
+        }
+    });
+
+    console.log("Successfully updated scores");
 }
 
 // function to display the current leaderboard in an embed message

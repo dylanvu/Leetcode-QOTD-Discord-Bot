@@ -3,13 +3,12 @@ import { Collection } from "discord.js"
 // difficulty of leetcode problems
 export type DifficultyOptions = "Hard" | "Medium" | "Easy"
 
-// types of leaderboards
-export type LeaderboardTypes = "weekly" | "monthly"
+// https://stackoverflow.com/questions/44480644/string-union-to-string-array
+export const AllLeaderboardTypes = ["weekly", "monthly"] as const;
 
-// an array of LeaderboardType values using a mapped type, meant for the updateScoreJob function
-export type LeaderboardTypesIterable = keyof {
-    [K in LeaderboardTypes]: K;
-}[];
+// generate the types from the above array
+type LeaderboardTuple = typeof AllLeaderboardTypes;
+export type LeaderboardTypes = LeaderboardTuple[number]
 
 // how much each leetcode question value should be
 export enum PointsByDifficulty {
