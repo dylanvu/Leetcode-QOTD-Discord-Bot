@@ -130,7 +130,7 @@ export async function addPlayer(msg: Discord.Message<boolean>, discordId: string
     if (!guildCursor) {
         console.log(`Could not find guild for id: ${guildId} when adding player ${leetcodeUsername}, creating new guild`);
 
-        createGuild(guildId);
+        await createGuild(guildId);
 
         // now get the guild cursor again
         guildCursor = await getGuildCursor(guildId);
@@ -265,15 +265,15 @@ export async function updateProfile(leetcodeUsername: string, discordId: string,
 
 /**
  * update the player score in the leaderboard database
+ * should be done BEFORE any initial profile updates
  * @param discordId 
  * @param guildId 
  * @param leaderboardType 
  */
 export async function updateScore(discordId: string, guildId: string, leaderboardType: LeaderboardTypes) {
-    // get the score
+    // get the current score
     const score = await calculateScore(discordId, guildId, leaderboardType);
     // update the player score in the database
-
 }
 
 /**
@@ -297,9 +297,45 @@ export async function calculateScore(discordId: string, guildId: string, leaderb
     // get the current profile, if it wasn't passed in
     const profile = profileParam ? profileParam : await getLeetcodeProfile(username);
 
+    if (!profile) {
+        // could not get profile
+        console.error(`Could not get profile while calculating score for ${username}`);
+        return;
+    }
+
     // get the old profile of the player
+    const guild = await getGuildCursor(guildId);
+    if (!guild) {
+        console.error(`Could not get guild cursor while calculating score for guild ${guildId}`)
+        return;
+    }
+    const players: Player[] = guild.players;
+    const player = players.find((player) => player.discordId === discordId);
+    if (!player) {
+        console.error(`Could not get player ${discordId} data from guild ${guildId}`);
+        return;
+    }
+
+    const oldProfile = player[leaderboardType].initialProfile;
+
     // calculate the new score by finding the difference between the old profile, the current profile, and the point difficulty
+    const oldProfileScore = await calculateScore(discordId, guildId, leaderboardType, username, oldProfile);
+    if (oldProfileScore === undefined) {
+        console.error(`Error while calculating old profile score of ${discordId} in guild ${guildId}`);
+    }
+
+    const newProfileScore = await calculateScore(discordId, guildId, leaderboardType, username, profile);
+    if (newProfileScore === undefined) {
+        console.error(`Error while calculating new profile score of ${discordId} in guild ${guildId}`);
+    }
+
+    if (oldProfileScore === undefined || newProfileScore === undefined) {
+        return;
+    }
+
     // return the player's score
+    return newProfileScore - oldProfileScore;
+
 }
 
 // function that the cron job runs to update the leaderboard every day
