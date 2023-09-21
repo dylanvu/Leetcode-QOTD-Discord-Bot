@@ -119,7 +119,6 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
         return;
     }
 
-    // add player to mongoDB collection
     // query database to see if the guildId already exists
 
     let guildCursor = await getGuildCursor(guildId);
@@ -128,7 +127,6 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     // if guild does not exist, create it
     if (!guildCursor) {
         console.log(`Could not find guild for id: ${guildId} when adding player ${leetcodeUsername}, creating new guild`);
-        // TODO: do me
 
         createGuild(guildId);
 
@@ -144,6 +142,16 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
 
     
     // add player to the collection
+
+    // check if player already exists
+    const prevPlayers: Player[] = guildCursor.players;
+    if (prevPlayers.filter((player) => player.discordId === discordId ).length > 1) {
+        // player already exists
+        // TODO: send a message to channel
+        return;
+    }
+
+
     // create new player object
     const newPlayer: Player = {
         discordId: discordId,
@@ -159,20 +167,17 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
     }
 
     // now need to update mongoDB
-    // copy old players
-    const prevPlayers: Player[] = guildCursor.players;
-    // add the new player
-    prevPlayers.push(newPlayer);
 
     // update mongoDB
     await collection.updateOne({
         guildId: guildId
     }, {
-        $set: {
-            players: prevPlayers
+        $push: {
+            players: newPlayer
         }
     });
     console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
+    // TODO: send a message to channel
 
 }
 
@@ -182,13 +187,48 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
  * @param guildId the id of the discord guild
  */
 export async function removePlayer(discordId: string, guildId: string) {
+
     // query database for guild
     const guild = await getGuildCursor(guildId);
+
     // if it does not exist, return
+    if (!guild) {
+        console.error(`Could not remove player ${discordId} because could not find guild id matching ${guildId}`);
+        return;
+    }
 
     // remove player from collection
+    // find player
+    const players = guild.players;
+    if (players.filter((player: Player) => player.discordId === discordId).length < 1) {
+        // could not find player
+        // send a message saying not found and return
+        // TODO: send a discord message
+        return;
+    }
+
+    // remove player from database
+    const collection = getCollection();
+    await collection.updateOne({
+        guildId: guildId
+    }, {
+        $pull: {
+            players: { discordId: discordId }
+        }
+    });
+
+    console.log(`Successfully deleted player ${discordId}.`);
     // check if the number of players is empty
-    // if empty, remove guild from mongodb collection
+    const updatedGuild = await getGuildCursor(guildId);
+    if (!updatedGuild) {
+        console.error(`Could not find guild id ${guildId} after deleting player ${discordId}`);
+    } else if (updatedGuild.players.length) {
+        // remove guild from mongodb collection
+        await collection.deleteOne({
+            guildId: guildId
+        })
+        console.log(`Deleting ${guildId} from database due to no active players`);
+    }
 }
 
 
