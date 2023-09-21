@@ -4,10 +4,7 @@ import { Collection } from "discord.js"
 export type DifficultyOptions = "Hard" | "Medium" | "Easy"
 
 // types of leaderboards
-export enum LeaderboardType {
-    Weekly = "weekly",
-    Monthly = "monthly"
-}
+export type LeaderboardTypes = "weekly" | "monthly"
 
 // how much each leetcode question value should be
 export enum PointsByDifficulty {
