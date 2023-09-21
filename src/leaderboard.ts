@@ -270,9 +270,7 @@ export async function updateProfile(leetcodeUsername: string, discordId: string,
  * @param guildId 
  * @param leaderboardType 
  */
-export async function updateScore(discordId: string, guildId: string, leaderboardType: LeaderboardTypes) {
-    // get the current score
-    const score = await calculateScore(discordId, guildId, leaderboardType);
+export async function updateScore(discordId: string, guildId: string, leaderboardType: LeaderboardTypes, newScore: number) {
     // update the player score in the database
 }
 
@@ -284,7 +282,7 @@ export async function updateScore(discordId: string, guildId: string, leaderboar
  * @param leetcodeUsername 
  * @param profileParam 
  */
-export async function calculateScore(discordId: string, guildId: string, leaderboardType: LeaderboardTypes, leetcodeUsername?: string, profileParam?: Profile): Promise<number | undefined> {
+export async function calculateScoreDifference(discordId: string, guildId: string, leaderboardType: LeaderboardTypes, leetcodeUsername?: string, profileParam?: Profile): Promise<number | undefined> {
 
     // get the leetcode username, if it was not passed in as a parameter
     const username = leetcodeUsername ? leetcodeUsername : await getLeetcodeUsernameFromDiscordId(discordId, guildId);
@@ -319,12 +317,12 @@ export async function calculateScore(discordId: string, guildId: string, leaderb
     const oldProfile = player[leaderboardType].initialProfile;
 
     // calculate the new score by finding the difference between the old profile, the current profile, and the point difficulty
-    const oldProfileScore = await calculateScore(discordId, guildId, leaderboardType, username, oldProfile);
+    const oldProfileScore = calculateScore(oldProfile);
     if (oldProfileScore === undefined) {
         console.error(`Error while calculating old profile score of ${discordId} in guild ${guildId}`);
     }
 
-    const newProfileScore = await calculateScore(discordId, guildId, leaderboardType, username, profile);
+    const newProfileScore = calculateScore(profile);
     if (newProfileScore === undefined) {
         console.error(`Error while calculating new profile score of ${discordId} in guild ${guildId}`);
     }
@@ -338,13 +336,17 @@ export async function calculateScore(discordId: string, guildId: string, leaderb
 
 }
 
+function calculateScore(profile: Profile): number {
+    return profile.easy * PointsByDifficulty.Easy + profile.medium * PointsByDifficulty.Medium + profile.hard * PointsByDifficulty.Hard;
+}
+
 // function that the cron job runs to update the leaderboard every day
-export async function updateJob(guildId: string, leaderboardType: LeaderboardTypes) {
+export async function updateScoreJob(guildId: string, leaderboardType: LeaderboardTypes) {
     // grab all the players for the guild
     // for each player
-        // for the specific leaderboard type:
-        // calculate new scores
-        // update profile object
+        // for each specific leaderboard type:
+        // calculate new scores based on the initial profile, and the current profile
+        // update the score in the database
 }
 
 // function to display the current leaderboard in an embed message

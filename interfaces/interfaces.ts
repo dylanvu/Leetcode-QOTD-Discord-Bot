@@ -25,7 +25,7 @@ export interface Profile {
  */
 interface scoreInformation {
     points: number,
-    initialProfile: Profile // the representation of the leetcode profile of the user at the beginning of the specified timeframe. Will be updated and overwritten at the end of each leaderboard period
+    initialProfile: Profile // the representation of the leetcode profile of the user at the beginning of the specified timeframe. Will be updated and overwritten at the end of each leaderboard period. Is not updated daily, unless the timeframe is daily.
 }
 
 export interface Player {
