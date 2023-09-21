@@ -286,10 +286,16 @@ export async function calculateScore(discordId: string, guildId: string, leaderb
     // return the player's score
 }
 
+// function that the cron job runs to update the leaderboard every day
 export async function updateJob(guildId: string, leaderboardType: keyof LeaderboardType) {
     // grab all the players for the guild
     // for each player
         // for the specific leaderboard type:
         // calculate new scores
         // update profile object
+}
+
+// function to display the current leaderboard in an embed message
+export async function displayLeaderboard(msg: Discord.Message<boolean>, guildId: string) {
+
 }
