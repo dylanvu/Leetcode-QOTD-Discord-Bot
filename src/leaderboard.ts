@@ -4,6 +4,7 @@ import { LeaderboardType, PointsByDifficulty, collectionName } from "../types/ty
 import * as cheerio from "cheerio";
 import { mongoclient } from "./index";
 import { WithId, Document } from "mongodb";
+import Discord from "discord.js"
 
 /**
  * scrape the leetcoder profile information to obtain number of solved problems of each difficulty
@@ -109,13 +110,14 @@ async function getLeetcodeUsernameFromDiscordId(discordId: string, guildId: stri
  * @param leetcodeUsername 
  * @returns 
  */
-export async function addPlayer(discordId: string, leetcodeUsername: string, guildId: string) {
+export async function addPlayer(msg: Discord.Message<boolean>, discordId: string, leetcodeUsername: string, guildId: string) {
 
     // check if leetcode username is valid
     const profile = await getLeetcodeProfile(leetcodeUsername);
     if (!profile) {
         // send message rejecting join request due to error, likely missing/incorrect leetcode username?
         console.error(`Could not find leetcode profile for ${leetcodeUsername}, did not add player.`);
+        await msg.reply(`Could not find leetcode profile for "${leetcodeUsername}". Are you sure this user exists?`)
         return;
     }
 
@@ -136,6 +138,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
             // error when creating new guild
             console.error(`Could not create the new guild in mongoDB for guildId ${guildId} while adding player ${leetcodeUsername}`);
             // send message rejecting join request due to error, likely in the backend/bot side
+            await msg.reply("There was an error in the bot end when creating the leaderboard. Please contact the developer.");
             return;
         }
     }
@@ -145,9 +148,9 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
 
     // check if player already exists
     const prevPlayers: Player[] = guildCursor.players;
-    if (prevPlayers.filter((player) => player.discordId === discordId ).length > 1) {
+    if (prevPlayers.filter((player) => player.discordId === discordId).length >= 1) {
         // player already exists
-        // TODO: send a message to channel
+        await msg.reply("You've already joined the leaderboard! Remove yourself if you want to add add a different account!");
         return;
     }
 
@@ -177,7 +180,7 @@ export async function addPlayer(discordId: string, leetcodeUsername: string, gui
         }
     });
     console.log(`Successfully added ${leetcodeUsername} to the leaderboard`);
-    // TODO: send a message to channel
+    await msg.reply("You've joined the leaderboard!");
 
 }
 

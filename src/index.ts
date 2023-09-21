@@ -17,7 +17,7 @@ import * as mongo from 'mongodb';
 // import useful functions
 import { queueDailyQuestion } from "./cron";
 import { generateNewProblem } from "./problem";
-import { getLeetcodeProfile } from "./leaderboard";
+import { getLeetcodeProfile, addPlayer } from "./leaderboard";
 import { sendEmbedToChannel } from "./helper";
 
 // run the dotenv package to actually load from the .env file
@@ -84,13 +84,17 @@ const leaderboardCommand = "leaderboard";
 
 // when a "messageCreate" event happens (message is sent in a server where the bot lives in), handle it
 client.on("messageCreate", msg => {
-    // console.log(msg.channelId);
+    const guildId = msg.guildId;
     if (msg.content === `${baseCommand} new`) {
         console.log(msg.channelId);
         generateNewProblem().then((embed) => {
             embed ? sendEmbedToChannel(client, msg.channelId, embed) : msg.reply("Sorry, there was an error getting a new embed. Please contact Dylan.")
         });
-    } else if (msg.content === `${baseCommand} ${leaderboardCommand} join`) {
+    } else if (msg.content.includes(`${baseCommand} ${leaderboardCommand} join`)) {
+        if (!guildId) {
+            msg.reply("Something went wrong while getting the guild id, please contact the developer or something rip");
+            return;
+        }
         // parse command for leetcode user id
         const splittedContent = msg.content.split(" ");
         if (splittedContent.length === 4) {
@@ -99,10 +103,13 @@ client.on("messageCreate", msg => {
             if (leetcodeUsername) {
                 // get message author id
                 const discordID = msg.author.id;
-                // fetch leetcode profile
-                const profile = getLeetcodeProfile(leetcodeUsername);
                 // save to database
+                addPlayer(msg, discordID, leetcodeUsername, guildId);
+            } else {
+                console.error("could not get leetcode username properly")
             }
+        } else {
+            console.error("invalid size of command");
         }
         // ignore since it's invalid size
     }
