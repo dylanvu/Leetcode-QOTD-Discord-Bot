@@ -66,7 +66,7 @@ export async function getLeetcodeProfile(leetcodeUsername: string): Promise<Prof
     return profileObject;
 }
 
-function getCollection() {
+export function getCollection() {
     return mongoclient.db("Leetcode-QOTD-Discord").collection(collectionName);
 }
 
@@ -343,7 +343,7 @@ export async function updateScoreJob(guildId: string) {
         return;
     }
     // for each player
-    await guild.players.forEach(async (player: Player) => {
+    for (let player of guild.players) {
         // for each specific leaderboard type:
         for (const type of AllLeaderboardTypes) {
             // calculate new scores based on the initial profile, and the current profile
@@ -355,7 +355,7 @@ export async function updateScoreJob(guildId: string) {
             // update the score for the player
             player[type].points = newScore;
         }
-    });
+    }
 
     // update score in the database
     await collection.updateOne({
