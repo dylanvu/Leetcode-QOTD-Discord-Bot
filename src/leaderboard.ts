@@ -334,7 +334,7 @@ function calculateScore(profile: Profile): number {
  * @param guildId string representing the discord guild ID
  * @returns 
  */
-export async function updateScoreJob(guildId: string) {
+export async function updateScores(guildId: string) {
     const collection = getCollection();
     // grab all the players for the guild
     const guild = await getGuildCursor(guildId);
