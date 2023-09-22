@@ -206,7 +206,7 @@ export async function removePlayer(msg: Discord.Message<boolean>, discordId: str
     if (players.filter((player: Player) => player.discordId === discordId).length < 1) {
         // could not find player
         // send a message saying not found and return
-        msg.reply(`Sorry, I couldn't find you in the leaderboards! Are you sure you're in the leaderboard?`)
+        await msg.reply(`Sorry, I couldn't find you in the leaderboards! Are you sure you're in the leaderboard?`)
         return;
     }
 
@@ -221,11 +221,12 @@ export async function removePlayer(msg: Discord.Message<boolean>, discordId: str
     });
 
     console.log(`Successfully deleted player ${discordId}.`);
+    await msg.reply("You've left the leaderboard!");
     // check if the number of players is empty
     const updatedGuild = await getGuildCursor(guildId);
     if (!updatedGuild) {
         console.error(`Could not find guild id ${guildId} after deleting player ${discordId}`);
-    } else if (updatedGuild.players.length) {
+    } else if (updatedGuild.players.length === 0) {
         // remove guild from mongodb collection
         await collection.deleteOne({
             guildId: guildId
