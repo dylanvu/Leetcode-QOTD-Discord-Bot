@@ -189,7 +189,7 @@ export async function addPlayer(msg: Discord.Message<boolean>, discordId: string
  * @param discordId the discord ID of the player
  * @param guildId the id of the discord guild
  */
-export async function removePlayer(discordId: string, guildId: string) {
+export async function removePlayer(msg: Discord.Message<boolean>, discordId: string, guildId: string) {
 
     // query database for guild
     const guild = await getGuildCursor(guildId);
@@ -206,7 +206,7 @@ export async function removePlayer(discordId: string, guildId: string) {
     if (players.filter((player: Player) => player.discordId === discordId).length < 1) {
         // could not find player
         // send a message saying not found and return
-        // TODO: send a discord message
+        msg.reply(`Sorry, I couldn't find you in the leaderboards! Are you sure you're in the leaderboard?`)
         return;
     }
 
